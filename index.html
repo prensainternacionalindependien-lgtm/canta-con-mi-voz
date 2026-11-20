@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="es"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#171512"><meta name="color-scheme" content="dark">
+<title>Canta con mi voz</title><link rel="stylesheet" href="studio.css">
+</head><body><header><div class="mark" aria-hidden="true">♫</div><span>Estudio de canto</span></header>
+<main><h1>Canta con mi voz</h1>
+<p class="intro">Dale melodía a tu letra o canta sobre una canción que ya tengas.</p>
+<form id="studio">
+<fieldset id="inputs">
+<section class="card"><h2>Tu voz</h2>
+<label for="ref">Muestra sin música</label><p class="hint">Elige una grabación tuya. Usaremos hasta 12 segundos desde el punto que selecciones.</p>
+<input id="ref" type="file" accept="audio/*,.mp3,.wav,.m4a,.aac,.flac,.ogg,.aiff" required>
+<button id="mic" class="quiet" type="button">Grabar mi voz</button>
+<div id="preview" hidden><audio id="refPlayer" controls preload="metadata"></audio><label for="start">Inicio de la muestra · <output id="offset">0 s</output></label><input type="range" id="start" value="0" min="0" max="0" step="0.1"></div>
+</section>
+<section class="card"><h2>Tu canción</h2>
+<div class="modes"><label><input type="radio" name="mode" value="lyrics" checked><span>Con mi letra</span></label><label><input type="radio" name="mode" value="song"><span>Con una canción</span></label></div>
+<div id="lyricsPanel">
+<label for="lyrics">Letra en español</label><textarea id="lyrics" rows="6" placeholder="Escribe la primera estrofa…" required></textarea>
+<details><summary>Palabras de tu muestra (opcional)</summary><label for="refWords">Lo que dices en el fragmento elegido</label><textarea id="refWords" rows="2" placeholder="Escribe las palabras tal como las grabaste"></textarea></details>
+<p class="hint">La IA canta tu letra a capela. Para conservar una melodía concreta, elige «Con una canción».</p>
+<details><summary>Crear la música en Suno</summary><p>Copia tu letra y abre Suno. En «Custom», pégala y genera una canción. Si tienes «Add Voice», también puedes verificar tu voz allí. Para cambiar el cantante aquí, descarga la canción y abre «Con una canción».</p><button id="copy" type="button" class="quiet">Copiar letra</button> <a href="https://suno.com/create" target="_blank" rel="noopener noreferrer">Abrir Suno ↗</a><small id="copied" role="status"></small></details></div>
+<div id="songPanel" hidden>
+<label for="track">Canción que ya canta tu letra</label><input id="track" type="file" accept="audio/*,.mp3,.wav,.m4a,.flac">
+<p class="hint">Puede ser una canción tuya descargada de Suno. Se separa el cantante, se convierte su voz y se vuelve a mezclar con la música.</p>
+<details><summary>Ya tengo las pistas separadas</summary><label class="check"><input id="stems" type="checkbox"> El archivo de arriba es la voz sola</label><label for="backing">Instrumental opcional</label><input id="backing" type="file" accept="audio/*,.mp3,.m4a,.wav,.flac"></details></div>
+</section>
+<p class="notice" id="transfer"></p><button type="submit" class="primary" id="create">Cantar mi letra</button>
+</fieldset></form>
+<div id="feedback" aria-live="polite" role="status"></div><button id="cancel" class="quiet" hidden>Cancelar espera</button>
+<section class="card result" id="result" hidden><h2>Tu audio</h2><audio id="player" controls></audio><div class="exports"><a id="wav" download="Mi-cancion.wav">Guardar WAV</a><button id="mp3" class="quiet">Guardar MP3</button><button id="share" class="quiet" hidden>Compartir</button></div></section>
+</main><footer>Canta con mi voz · <a href="https://github.com/prensainternacionalindependien-lgtm/canta-con-mi-voz">Código en GitHub</a></footer>
+<script type="module" src="./studio.js"></script></body></html>
