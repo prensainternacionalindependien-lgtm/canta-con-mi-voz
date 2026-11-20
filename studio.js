@@ -19,7 +19,7 @@ function adapt(){
   $('lyrics').required=writing; $('track').required=!writing; $('backing').disabled=!$('stems').checked;
   $('create').textContent=writing?'Cantar mi letra':'Cantar esta canción';
   $('transfer').textContent=writing?
-    'Al tocar Cantar, se envían tu letra y la muestra de tu voz al servicio público OmniVoice Singing en Hugging Face.':
+    'Al tocar Cantar, se envían tu letra, la muestra y, si la escribes, su transcripción al servicio público OmniVoice Singing en Hugging Face.':
     'Al tocar Cantar, Seed-VC en Hugging Face recibe tu muestra y la voz guía.'+
     ($('stems').checked?' La instrumental se mezcla en tu teléfono.':' Demucs recibe la canción para separar la música del cantante.');
 }
@@ -82,6 +82,19 @@ function clearOutput(){
   if(outputURL)URL.revokeObjectURL(outputURL);
   outputURL=null;finalAudio=null;$('result').hidden=true;$('player').removeAttribute('src');
 }
+function hasVoice(buffer,requestedSeconds){
+  if(buffer.duration<Math.min(1.2,requestedSeconds/3))return false;
+  const samples=buffer.getChannelData(0);
+  const windowSize=Math.round(buffer.sampleRate*0.1);
+  let active=0;
+  for(let start=0;start<samples.length;start+=windowSize){
+    const end=Math.min(start+windowSize,samples.length);
+    let power=0;
+    for(let i=start;i<end;i+=8)power+=samples[i]*samples[i];
+    if(power/Math.ceil((end-start)/8)>0.000032)active++;
+  }
+  return active>=Math.min(6,Math.ceil(buffer.duration*3));
+}
 async function singLyrics(ref,signal){
   const parts=phrases($('lyrics').value);
   if(!parts.length)throw new Error('Escribe al menos una línea de letra.');
@@ -93,9 +106,17 @@ async function singLyrics(ref,signal){
     logStage('Cantando el fragmento '+(i+1)+' de '+parts.length+'.');
     const phrase=parts[i];
     const seconds=Math.max(3,Math.min(30,Math.round(phrase.split(/\s+/).length*0.62)));
-    const result=await predict(host,'_clone_fn',['[singing] '+phrase,'Spanish',voice,$('refWords').value.trim(),'',24,2,true,1,seconds,true,false],signal);
-    const buf=await downloadResult(host,result[0],signal);
-    if(buf.duration<Math.min(1.2,seconds/3))throw new Error('El motor devolvió una toma demasiado corta. Vuelve a generar el fragmento.');
+    const generate=async duration=>{
+      const args=['[singing] '+phrase,'Spanish',voice,$('refWords').value.trim(),'',24,2,true,1,duration,true,false];
+      const result=await predict(host,'_clone_fn',args,signal);
+      return downloadResult(host,result[0],signal);
+    };
+    let buf=await generate(seconds);
+    if(!hasVoice(buf,seconds)){
+      logStage('El fragmento '+(i+1)+' salió muy bajo o corto. Probando una segunda toma.');
+      buf=await generate(null);
+      if(!hasVoice(buf,seconds))throw new Error('La toma salió muy baja o corta. Prueba con una muestra clara y escribe las palabras que dices en ella.');
+    }
     tracks.push({buffer:buf,at});at+=buf.duration+0.22;
   }
   return mix(tracks,context.sampleRate);
